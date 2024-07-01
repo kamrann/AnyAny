@@ -1,0 +1,21 @@
+
+module;
+
+#include <anyany/anyany.hpp>
+
+export module anyany;
+
+export namespace aa
+{
+    using aa::basic_any_with;
+    using aa::any_with;
+    using aa::type_info;
+    using aa::copy;
+    using aa::copy_with;
+    using aa::move;
+    using aa::default_any_soos;
+    using aa::unreachable_allocator;
+    using aa::poly_ref;
+    using aa::invoke;
+    using aa::any_cast;
+}
