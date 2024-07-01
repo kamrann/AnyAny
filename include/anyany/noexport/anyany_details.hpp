@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <utility>  // forward
 #include <cstring>  // memcpy
+#include <algorithm> // max
 
 #include "common.hpp"
 
