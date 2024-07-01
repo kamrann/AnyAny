@@ -261,7 +261,7 @@ AA_CONSTEVAL_CPP20 bool copy_requires_alloc() {
 //    * if return != 'dest', then value was allocated by 'alloc' and allocation size storoed under
 //    'dest'(size_t)
 template <typename T, typename Alloc, size_t SooS>
-static void* copy_fn(const void* src_raw, void* dest, void* alloc_) {
+void* copy_fn(const void* src_raw, void* dest, void* alloc_) {
   Alloc& alloc = *reinterpret_cast<Alloc*>(alloc_);
   const T& src = *reinterpret_cast<const T*>(src_raw);
   if constexpr (noexport::is_fits_in_soo_buffer<T, SooS>) {
@@ -285,23 +285,23 @@ static void* copy_fn(const void* src_raw, void* dest, void* alloc_) {
   }
 }
 template <typename T, typename Alloc, size_t SooS>
-static void* copy_fn_empty_alloc(const void* src_raw, void* dest) {
+void* copy_fn_empty_alloc(const void* src_raw, void* dest) {
   Alloc a{};
   return copy_fn<T, Alloc, SooS>(src_raw, dest, std::addressof(a));
 }
 
 template <size_t Sizeof>
-static void* trivial_copy_small_fn(const void* src_raw, void* dest, void*) noexcept {
+void* trivial_copy_small_fn(const void* src_raw, void* dest, void*) noexcept {
   std::memcpy(dest, src_raw, Sizeof);
   return dest;
 }
 template <size_t Sizeof>
-static void* trivial_copy_small_fn_empty_alloc(const void* src_raw, void* dest) {
+void* trivial_copy_small_fn_empty_alloc(const void* src_raw, void* dest) {
   return trivial_copy_small_fn<Sizeof>(src_raw, dest, nullptr);
 }
 
 template <size_t Sizeof, typename Alloc>
-static void* trivial_copy_big_fn(const void* src_raw, void* dest, void* alloc_) {
+void* trivial_copy_big_fn(const void* src_raw, void* dest, void* alloc_) {
   static_assert(is_byte_like_v<typename Alloc::value_type>);
   Alloc& alloc = *reinterpret_cast<Alloc*>(alloc_);
   void* result = alloc.allocate(Sizeof);
@@ -310,7 +310,7 @@ static void* trivial_copy_big_fn(const void* src_raw, void* dest, void* alloc_) 
   return result;
 }
 template <size_t Sizeof, typename Alloc>
-static void* trivial_copy_big_fn_empty_alloc(const void* src_raw, void* dest) {
+void* trivial_copy_big_fn_empty_alloc(const void* src_raw, void* dest) {
   Alloc a{};
   return trivial_copy_big_fn<Sizeof, Alloc>(src_raw, dest, std::addressof(a));
 }
