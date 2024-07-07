@@ -16,6 +16,7 @@ export namespace aa
     using aa::default_any_soos;
     using aa::unreachable_allocator;
     using aa::poly_ref;
+    using aa::poly_ptr;
     using aa::invoke;
     using aa::any_cast;
 }
