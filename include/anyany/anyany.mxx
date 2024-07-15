@@ -7,16 +7,29 @@ export module anyany;
 
 export namespace aa
 {
-    using aa::basic_any_with;
-    using aa::any_with;
-    using aa::type_info;
-    using aa::copy;
-    using aa::copy_with;
-    using aa::move;
     using aa::default_any_soos;
     using aa::unreachable_allocator;
-    using aa::poly_ref;
-    using aa::poly_ptr;
+    using aa::type_info;
+    using aa::copy;
+    using aa::move;
     using aa::invoke;
     using aa::any_cast;
+
+#if defined(_MSC_VER) && !defined(__clang__)
+    template <typename Alloc, size_t SooS, typename... Methods>
+    using basic_any_with = aa::basic_any_with<Alloc, SooS, Methods...>;
+    template <typename... Methods>
+    using any_with = aa::any_with<Methods...>;
+    template <typename Alloc = default_allocator, size_t SooS = default_any_soos>
+    using copy_with = aa::copy_with<Alloc, SooS>;
+#else
+    using aa::basic_any_with;
+    using aa::any_with;
+    using aa::copy_with;
+#endif
+
+    using aa::poly_ref;
+    using aa::const_poly_ref;
+    using aa::poly_ptr;
+    using aa::const_poly_ptr;
 }
