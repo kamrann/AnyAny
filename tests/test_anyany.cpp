@@ -1362,7 +1362,25 @@ TEST(memory_reuse) {
   return error_count;
 }
 
+struct inplace_tester {
+  int f = 0;
+  std::string s = "hello";
+
+  inplace_tester() = default;
+  inplace_tester(inplace_tester&&) = delete;
+  void operator=(inplace_tester&&) = delete;
+
+  bool operator==(const inplace_tester& t) const {
+    return t.f == f && t.s == s;
+  }
+};
+
+static_assert(!std::is_move_constructible_v<inplace_tester>);
+
 int main() {
+  aa::any_with<aa::type_info, aa::equal_to> some = aa::inplaced([&] { return inplace_tester{}; });
+  if (!(aa::any_cast<inplace_tester&>(some) == inplace_tester{}))
+    return -1;
 #ifndef _MSC_VER
   static_assert((sizeof(aa::basic_any_with<aa::default_allocator, 0>)) ==
                 (sizeof(void*) * 2 + sizeof(size_t)));

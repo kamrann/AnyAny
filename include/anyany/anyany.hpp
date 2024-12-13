@@ -1100,6 +1100,35 @@ struct unreachable_allocator {
   }
 };
 
+// it is a tag type for contructing basic_any in place without move similar to std::in_place_t
+// example:
+//
+// my_any foo() {
+//   // returned 'my_any' will contain 'some_type'
+//   return inplaced([&] { return some_type(args...); })
+// }
+//
+template <typename F>
+struct inplaced {
+  ANYANY_NO_UNIQUE_ADDRESS F f;
+
+  using value_type = decltype(std::declval<F>()());
+
+  static_assert(std::is_same_v<std::decay_t<value_type>, value_type>);
+
+  operator value_type() && {
+    return std::move(f)();
+  }
+#if __cpp_aggregate_paren_init < 201902L
+  inplaced() = default;
+  inplaced(F foo) noexcept(std::is_nothrow_move_constructible_v<F>) : f(std::move(foo)) {
+  }
+#endif
+};
+
+template <typename F>
+inplaced(F&&) -> inplaced<std::decay_t<F>>;
+
 // dont use it directly, instead use any_with / basic_any_with
 // SooS == Small Object Optimization Size
 // strong exception guarantee for constructors and copy/move assignments
@@ -1292,6 +1321,13 @@ struct basic_any : construct_interface<basic_any<Alloc, SooS, Methods...>, Metho
     return emplace<std::decay_t<T>, std::initializer_list<U>, Args...>(std::move(list),
                                                                        std::forward<Args>(args)...);
   }
+
+  // constructs any with 'f::value_type' in it
+  template <typename F>
+  basic_any(inplaced<F> f) noexcept(noexcept(f.f())) {
+    emplace_in_empty<typename inplaced<F>::value_type>(std::move(f));
+  }
+
   template <typename T, typename... Args, std::enable_if_t<exist_for<T, Methods...>::value, int> = 0>
   basic_any(std::in_place_type_t<T>,
             Args&&... args) noexcept(std::is_nothrow_constructible_v<std::decay_t<T>, Args&&...> &&
@@ -1601,7 +1637,7 @@ struct any_cast_fn<T, anyany_poly_traits> {
   }
 #if __cpp_exceptions
   template <typename U, std::enable_if_t<is_any<U>::value, int> = 0>
-  decltype(auto) operator()(U && any) const {
+  decltype(auto) operator()(U&& any) const {
     auto* ptr = (*this)(std::addressof(any));
     if (!ptr)
       throw aa::bad_cast{};
@@ -1620,9 +1656,8 @@ struct any_cast_fn<T, anyany_poly_traits> {
   }
 #else
   template <typename U, std::enable_if_t<is_any<U>::value, int> = 0>
-  decltype(auto) operator()(U && any) const {
-    static_assert(
-        ![] {}, "exceptions disabled, use nothrow version");
+  decltype(auto) operator()(U&& any) const {
+    static_assert(![] {}, "exceptions disabled, use nothrow version");
   }
 #endif
 
@@ -1653,8 +1688,7 @@ struct any_cast_fn<T, anyany_poly_traits> {
   std::conditional_t<std::is_rvalue_reference_v<T>, noexport::remove_cvref_t<T>,
                      std::conditional_t<std::is_reference_v<T>, T, std::remove_cv_t<T>>>
   operator()(poly_ref<Methods...> p) const {
-    static_assert(
-        ![] {}, "exceptions disabled, use nothrow version");
+    static_assert(![] {}, "exceptions disabled, use nothrow version");
   }
 #endif
 #if __cpp_exceptions
@@ -1672,8 +1706,7 @@ struct any_cast_fn<T, anyany_poly_traits> {
   template <typename... Methods>
   std::conditional_t<std::is_reference_v<T>, const X&, std::remove_cv_t<T>> operator()(
       const_poly_ref<Methods...> p) const {
-    static_assert(
-        ![] {}, "exceptions disabled, use nothrow version");
+    static_assert(![] {}, "exceptions disabled, use nothrow version");
   }
 #endif
 
@@ -1931,7 +1964,7 @@ struct call {};
   struct call<Ret(Args...) CONST NOEXCEPT> {                                                \
     template <typename T>                                                                   \
     static auto do_invoke(CONST T& self, Args... args) NOEXCEPT                             \
-        ->decltype(static_cast<Ret>(self(static_cast<Args&&>(args)...))) {                  \
+        -> decltype(static_cast<Ret>(self(static_cast<Args&&>(args)...))) {                 \
       return static_cast<Ret>(self(static_cast<Args&&>(args)...));                          \
     }                                                                                       \
     using signature_type = Ret(CONST ::aa::erased_self_t&, Args...) NOEXCEPT;               \
