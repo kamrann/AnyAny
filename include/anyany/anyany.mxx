@@ -10,6 +10,7 @@ export namespace aa
     using aa::default_any_soos;
     using aa::unreachable_allocator;
     using aa::type_info;
+    using aa::equal_to;
     using aa::copy;
     using aa::move;
     using aa::invoke;
