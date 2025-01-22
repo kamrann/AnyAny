@@ -1,6 +1,10 @@
 
 module;
 
+// @todo: need to submit pr, this should be included by anyany.hpp
+// (seems to rely a lot on transitive includes, but for std::launder and libc++, they don't suffice anyway)
+#include <new>
+
 #include <anyany/anyany.hpp>
 
 export module anyany;
