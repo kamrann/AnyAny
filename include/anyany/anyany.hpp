@@ -217,17 +217,11 @@ template <typename X, anyany_simple_method_concept... Methods>
 struct exist_for {
  private:
   template <typename T, typename Method>
-  static auto check_fn(int) -> decltype(Method::template do_invoke<T>, std::true_type{}) {
-    throw;
-  }
+  static auto check_fn(int) -> decltype(Method::template do_invoke<T>, std::true_type{});
   template <typename T, typename Method>  // for pseudomethods, must be consteval fn
-  static auto check_fn(bool) -> decltype(Method{}.template do_value<T>(), std::true_type{}) {
-    throw;
-  }
+  static auto check_fn(bool) -> decltype(Method{}.template do_value<T>(), std::true_type{});
   template <typename, typename>
-  static auto check_fn(...) -> std::false_type {
-    throw;
-  }
+  static auto check_fn(...) -> std::false_type;
 
  public:
   static constexpr inline bool value = (decltype(check_fn<std::decay_t<X>, Methods>(0))::value && ...);
@@ -322,13 +316,9 @@ struct copy_method {
 
 namespace noexport {
 
-inline auto get_any_copy_method(type_list<>) -> void {
-  throw;
-}
+auto get_any_copy_method(type_list<>) -> void;
 template <typename A, size_t N, typename... Tail>
-auto get_any_copy_method(type_list<copy_method<A, N>, Tail...>) -> copy_method<A, N> {
-  throw;
-}
+auto get_any_copy_method(type_list<copy_method<A, N>, Tail...>) -> copy_method<A, N>;
 template <typename Head, typename... Tail>
 auto get_any_copy_method(type_list<Head, Tail...>) {
   return get_any_copy_method(type_list<Tail...>{});
@@ -524,13 +514,9 @@ namespace noexport {
 // searches for ::type,
 // if no ::type, then Plugin itself used
 template <typename Plugin>
-auto select_plugin(int) -> typename Plugin::type {
-  throw;
-}
+auto select_plugin(int) -> typename Plugin::type;
 template <typename Plugin>
-auto select_plugin(...) -> Plugin {
-  throw;
-}
+auto select_plugin(...) -> Plugin;
 
 }  // namespace noexport
 
