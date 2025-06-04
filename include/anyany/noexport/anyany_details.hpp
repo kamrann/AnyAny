@@ -281,12 +281,16 @@ static void* copy_fn(const void* src_raw, void* dest, void* alloc_) {
     if constexpr (std::is_nothrow_copy_constructible_v<T>) {
       noexport::construct_at(reinterpret_cast<T*>(ptr), src);
     } else {
+#if __cpp_exceptions
       try {
         noexport::construct_at(reinterpret_cast<T*>(ptr), src);
       } catch (...) {
         alloc.deallocate(ptr, allocation_size);
         throw;
       }
+#else
+      noexport::construct_at(reinterpret_cast<T*>(ptr), src);
+#endif
     }
     noexport::construct_at(reinterpret_cast<std::size_t*>(dest), allocation_size);
     return ptr;
